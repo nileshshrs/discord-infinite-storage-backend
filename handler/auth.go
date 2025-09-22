@@ -25,26 +25,43 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// If userAgent not sent in body, take it from header
-	if input.UserAgent == "" {
-		input.UserAgent = r.UserAgent()
-	}
-
 	user, accessToken, refreshToken, err := h.service.Register(input)
 	if err != nil {
 		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusBadRequest)
 		return
 	}
 
+	// Set HTTP-only cookies
+	http.SetCookie(w, &http.Cookie{
+		Name:     "accessToken",
+		Value:    accessToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false, // set true if using HTTPS
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   15 * 60, // 15 minutes
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refreshToken",
+		Value:    refreshToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false, // set true if using HTTPS
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   30 * 24 * 60 * 60, // 30 days
+	})
+
+	// Return user data in response (without tokens in body if preferred)
+	user.Password = "" // hide password
 	response := map[string]interface{}{
-		"user":         user,
-		"accessToken":  accessToken,
-		"refreshToken": refreshToken,
+		"user": user,
 	}
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(response)
 }
+
 
 
 // func(u *User) Login(w http.ResponseWriter, r *http.Request){
