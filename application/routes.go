@@ -35,6 +35,8 @@ func loadRoutes(mongoCollection *mongo.Collection) http.Handler {
 	router.Route("/api/v1", func(api chi.Router) {
 		api.Route("/auth", func(auth chi.Router) {
 			auth.Post("/sign-up", authHandler.Register)
+			auth.Post("/sign-in", authHandler.Login)
+			auth.Post("/refresh", authHandler.RefreshToken)
 		})
 	})
 
