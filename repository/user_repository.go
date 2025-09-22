@@ -39,3 +39,7 @@ func (r *UserRepo) FindByUsername(username string) (*model.User, error) {
 	}
 	return &user, nil
 }
+
+func (r *UserRepo) Collection() *mongo.Collection {
+	return r.collection
+}
