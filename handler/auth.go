@@ -25,18 +25,26 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.service.Register(input)
+	// If userAgent not sent in body, take it from header
+	if input.UserAgent == "" {
+		input.UserAgent = r.UserAgent()
+	}
+
+	user, accessToken, refreshToken, err := h.service.Register(input)
 	if err != nil {
 		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusBadRequest)
 		return
 	}
 
-	// return the created user without password
-	user.Password = ""
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
-}
+	response := map[string]interface{}{
+		"user":         user,
+		"accessToken":  accessToken,
+		"refreshToken": refreshToken,
+	}
 
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
+}
 
 
 // func(u *User) Login(w http.ResponseWriter, r *http.Request){

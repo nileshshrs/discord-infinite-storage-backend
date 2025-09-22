@@ -17,9 +17,9 @@ func NewUserRepository(col *mongo.Collection) *UserRepo {
 	return &UserRepo{collection: col}
 }
 
-func (r *UserRepo) Create(user *model.User) error {
-	_, err := r.collection.InsertOne(context.Background(), user)
-	return err
+// Create inserts a user and returns InsertOneResult
+func (r *UserRepo) Create(user *model.User) (*mongo.InsertOneResult, error) {
+	return r.collection.InsertOne(context.Background(), user)
 }
 
 func (r *UserRepo) FindByEmail(email string) (*model.User, error) {
