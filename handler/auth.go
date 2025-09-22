@@ -1,34 +1,49 @@
 package handler
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
-	"time"
+
+	"github.com/nileshshrs/infinite-storage/service"
 )
 
+type AuthHandler struct {
+	service *service.AuthService
+}
 
-type User struct {
-	ID        string    `json:"id" bson:"_id,omitempty"`
-	Email     string    `json:"email" bson:"email"`
-	Username  string    `json:"username" bson:"username"`
-	Image     string    `json:"image" bson:"image"`
-	Password  string    `json:"password,omitempty" bson:"password"`
-	Role      string    `json:"role" bson:"role"`
-	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
+func NewAuthHandler(s *service.AuthService) *AuthHandler {
+	return &AuthHandler{service: s}
+}
+
+// Register handles POST /sign-up
+func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var input service.RegisterInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, `{"error":"invalid input"}`, http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.service.Register(input)
+	if err != nil {
+		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusBadRequest)
+		return
+	}
+
+	// return the created user without password
+	user.Password = ""
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(user)
 }
 
 
-func (u *User) Register(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Register endpoint hit")
-	w.WriteHeader(http.StatusNotImplemented)
-}
 
-func(u *User) Login(w http.ResponseWriter, r *http.Request){
-	fmt.Println("Login endpoint hit")
-	w.WriteHeader(http.StatusNotImplemented)
-}
-func(u *User) Update(w http.ResponseWriter, r *http.Request){
-	fmt.Println("Update endpoint hit")
-	w.WriteHeader(http.StatusNotImplemented)
-}
+// func(u *User) Login(w http.ResponseWriter, r *http.Request){
+// 	fmt.Println("Login endpoint hit")
+// 	w.WriteHeader(http.StatusNotImplemented)
+// }
+// func(u *User) Update(w http.ResponseWriter, r *http.Request){
+// 	fmt.Println("Login endpoint hit")
+// 	w.WriteHeader(http.StatusNotImplemented)
+// }

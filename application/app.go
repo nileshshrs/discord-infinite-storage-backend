@@ -2,19 +2,19 @@ package application
 
 import (
 	"context"
-	"fmt"
 	"net/http"
+
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type App struct {
 	router http.Handler
 }
 
-func New() *App {
-	app := &App{
-		router: loadRoutes(),
+func New(mongoCollection *mongo.Collection) *App {
+	return &App{
+		router: loadRoutes(mongoCollection),
 	}
-	return app
 }
 
 func (a *App) Start(ctx context.Context) error {
@@ -22,10 +22,5 @@ func (a *App) Start(ctx context.Context) error {
 		Addr:    ":6278",
 		Handler: a.router,
 	}
-	err := server.ListenAndServe()
-	if err != nil {
-		return fmt.Errorf("error starting server: %w", err)
-	}
-
-	return nil
+	return server.ListenAndServe()
 }
