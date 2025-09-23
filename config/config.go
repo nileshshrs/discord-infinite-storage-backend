@@ -6,18 +6,20 @@ import (
 )
 
 type Config struct {
-	URI             string
-	Port            string
-	DiscordToken    string
-	DiscordClientID string
+	URI              string
+	Port             string
+	DiscordToken     string
+	DiscordClientID  string
+	DiscordChannelID string
 }
 
 func Load() *Config {
 	cfg := &Config{
-		URI:             os.Getenv("URI"),
-		Port:            getEnv("PORT", "6278"),
-		DiscordToken:    os.Getenv("DISCORD_TOKEN"),
-		DiscordClientID: os.Getenv("DISCORD_CLIENT_ID"),
+		URI:              os.Getenv("URI"),
+		Port:             getEnv("PORT", "6278"),
+		DiscordToken:     os.Getenv("DISCORD_TOKEN"),
+		DiscordClientID:  os.Getenv("DISCORD_CLIENT_ID"),
+		DiscordChannelID: os.Getenv("DISCORD_CHANNEL_ID"),
 	}
 
 	if cfg.URI == "" {
@@ -28,6 +30,9 @@ func Load() *Config {
 	}
 	if cfg.DiscordClientID == "" {
 		log.Println("warning: DISCORD_CLIENT_ID is not set")
+	}
+	if cfg.DiscordChannelID == "" {
+		log.Println("warning: DISCORD_CHANNEL_ID is not set")
 	}
 
 	return cfg

@@ -23,6 +23,8 @@ func main() {
 
 	// Load config
 	cfg := config.Load()
+	// Start Discord bot
+	dg := bot.Run(cfg)
 
 	// Connect to MongoDB
 	collection, err := db.Connect(cfg.URI)
@@ -30,16 +32,12 @@ func main() {
 		log.Fatal("Failed to connect to MongoDB:", err)
 	}
 
-	// Start HTTP server in background
-	app := application.New(collection, cfg)
+	app := application.New(collection, dg, cfg) // pass dg as second argument
 	go func() {
 		if err := app.Start(context.Background()); err != nil {
 			fmt.Println("Error starting application:", err)
 		}
 	}()
-
-	// Start Discord bot
-	dg := bot.Run(cfg)
 
 	// Graceful shutdown for both HTTP + Bot
 	stop := make(chan os.Signal, 1)

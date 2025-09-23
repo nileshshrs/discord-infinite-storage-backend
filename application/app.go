@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/nileshshrs/infinite-storage/config"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -13,9 +14,9 @@ type App struct {
 	cfg    *config.Config
 }
 
-func New(mongoCollection *mongo.Collection, cfg *config.Config) *App {
+func New(mongoCollection *mongo.Collection, dg *discordgo.Session, cfg *config.Config) *App {
 	return &App{
-		router: loadRoutes(mongoCollection),
+		router: loadRoutes(mongoCollection, dg, cfg), // pass dg and cfg
 		cfg:    cfg,
 	}
 }
