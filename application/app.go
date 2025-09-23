@@ -4,22 +4,25 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/nileshshrs/infinite-storage/config"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type App struct {
 	router http.Handler
+	cfg    *config.Config
 }
 
-func New(mongoCollection *mongo.Collection) *App {
+func New(mongoCollection *mongo.Collection, cfg *config.Config) *App {
 	return &App{
 		router: loadRoutes(mongoCollection),
+		cfg:    cfg,
 	}
 }
 
 func (a *App) Start(ctx context.Context) error {
 	server := &http.Server{
-		Addr:    ":6278",
+		Addr:    ":" + a.cfg.Port, // use port from config instead of hardcoding
 		Handler: a.router,
 	}
 	return server.ListenAndServe()

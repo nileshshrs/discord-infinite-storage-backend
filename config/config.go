@@ -6,18 +6,28 @@ import (
 )
 
 type Config struct {
-	URI  string
-	Port string
+	URI             string
+	Port            string
+	DiscordToken    string
+	DiscordClientID string
 }
 
 func Load() *Config {
 	cfg := &Config{
-		URI:  os.Getenv("URI"),            // use URI as env variable
-		Port: getEnv("PORT", "6278"),
+		URI:             os.Getenv("URI"),
+		Port:            getEnv("PORT", "6278"),
+		DiscordToken:    os.Getenv("DISCORD_TOKEN"),
+		DiscordClientID: os.Getenv("DISCORD_CLIENT_ID"),
 	}
 
 	if cfg.URI == "" {
 		log.Fatal("URI environment variable is not set")
+	}
+	if cfg.DiscordToken == "" {
+		log.Println("warning: DISCORD_TOKEN is not set")
+	}
+	if cfg.DiscordClientID == "" {
+		log.Println("warning: DISCORD_CLIENT_ID is not set")
 	}
 
 	return cfg
