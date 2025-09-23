@@ -20,28 +20,31 @@ func loadRoutes(mongoCollection *mongo.Collection, dg *discordgo.Session, cfg *c
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 
-	// health check
+	// Health check
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	// separate collections
+	// Collections
 	userCollection := mongoCollection.Database().Collection("users")
 	sessionCollection := mongoCollection.Database().Collection("sessions")
+	fileCollection := mongoCollection.Database().Collection("files") // files collection
 
-	// repositories
+	// Repositories
 	userRepo := repository.NewUserRepository(userCollection)
 	sessionRepo := repository.NewSessionRepository(sessionCollection)
+	fileRepo := repository.NewFileRepository(fileCollection)
 
-	// services
+	// Services
 	authService := service.NewAuthService(userRepo, sessionRepo)
 	userService := service.NewUserService(userRepo)
-	uploadService := service.NewUploadService(dg) // create UploadService
+	uploadService := service.NewUploadService(dg)
+	fileService := service.NewFileService(fileRepo)
 
-	// handlers
+	// Handlers
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userService)
-	uploadHandler := handler.NewUploadHandler(uploadService, cfg) // pass UploadService
+	uploadHandler := handler.NewUploadHandler(uploadService, fileService, cfg) // pass both services
 
 	// API routes
 	router.Route("/api/v1", func(api chi.Router) {
@@ -55,12 +58,12 @@ func loadRoutes(mongoCollection *mongo.Collection, dg *discordgo.Session, cfg *c
 
 		// Protected user routes
 		api.Route("/users", func(users chi.Router) {
-			users.Use(middlewares.Authenticate) // protect these routes
+			users.Use(middlewares.Authenticate)
 			users.Get("/", userHandler.GetAllUsers)
 		})
 
 		// Discord file upload route
-		api.Post("/upload", uploadHandler.HandleUpload) // use UploadHandler
+		api.Post("/upload", uploadHandler.HandleUpload)
 	})
 
 	return router

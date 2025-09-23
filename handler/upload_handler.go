@@ -10,16 +10,19 @@ import (
 
 	"github.com/nileshshrs/infinite-storage/config"
 	"github.com/nileshshrs/infinite-storage/service"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type UploadHandler struct {
 	uploadService *service.UploadService
+	fileService   *service.FileService
 	cfg           *config.Config
 }
 
-func NewUploadHandler(uploadService *service.UploadService, cfg *config.Config) *UploadHandler {
+func NewUploadHandler(uploadService *service.UploadService, fileService *service.FileService, cfg *config.Config) *UploadHandler {
 	return &UploadHandler{
 		uploadService: uploadService,
+		fileService:   fileService,
 		cfg:           cfg,
 	}
 }
@@ -62,10 +65,40 @@ func (h *UploadHandler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Upload to Discord (wait for all chunks)
-	results, err := h.uploadService.SendFileInOrder(h.cfg.DiscordChannelID, "New file uploaded", tempPath)
+	uploadedChunks, err := h.uploadService.SendFileInOrder(h.cfg.DiscordChannelID, "New file uploaded", tempPath)
 	if err != nil {
 		log.Printf("Failed to send file: %v", err)
 		http.Error(w, `{"error":"failed to send file to Discord"}`, http.StatusInternalServerError)
+		os.Remove(tempPath)
+		return
+	}
+
+	// Get file size
+	fileInfo, err := os.Stat(tempPath)
+	if err != nil {
+		log.Printf("Failed to get file info: %v", err)
+		http.Error(w, `{"error":"failed to get file info"}`, http.StatusInternalServerError)
+		os.Remove(tempPath)
+		return
+	}
+
+	// Optional: get user ID from request (example: JWT or form value)
+	var userID *primitive.ObjectID
+	// Example: userID could be nil if not provided
+	// parsedID, err := primitive.ObjectIDFromHex("...") 
+	// userID = &parsedID
+
+	// Save metadata to MongoDB
+	fileDoc, err := h.fileService.SaveUploadedFile(
+		header.Filename,        // original filename
+		fileInfo.Size(),        // file size
+		h.cfg.DiscordChannelID, // channel ID
+		userID,                 // optional user ID
+		uploadedChunks,         // uploaded chunks
+	)
+	if err != nil {
+		log.Printf("Failed to save file metadata: %v", err)
+		http.Error(w, `{"error":"failed to save file metadata"}`, http.StatusInternalServerError)
 		os.Remove(tempPath)
 		return
 	}
@@ -75,8 +108,8 @@ func (h *UploadHandler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 
 	// Return success + trimmed responses
 	resp := map[string]interface{}{
-		"message":  "File sent to Discord successfully",
-		"uploads":  results,
+		"message": "File sent to Discord and saved successfully",
+		"file":    fileDoc,
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
