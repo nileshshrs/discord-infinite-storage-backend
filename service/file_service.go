@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// FileService handles saving file metadata to MongoDB
+// FileService handles saving and retrieving file metadata in MongoDB
 type FileService struct {
 	repo repository.FileRepository
 }
@@ -54,4 +54,14 @@ func (s *FileService) SaveUploadedFile(
 	}
 
 	return file, nil
+}
+
+// GetFilesByUser retrieves all files for a given user
+func (s *FileService) GetFilesByUser(userID primitive.ObjectID) ([]*model.File, error) {
+	return s.repo.FindByUser(userID)
+}
+
+// GetAllFiles retrieves all files in the system (optional)
+func (s *FileService) GetAllFiles() ([]*model.File, error) {
+	return s.repo.FindAll()
 }

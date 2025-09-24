@@ -15,7 +15,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// loadRoutes sets up all routes for the application
 func loadRoutes(mongoCollection *mongo.Collection, dg *discordgo.Session, cfg *config.Config) http.Handler {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
@@ -45,10 +44,10 @@ func loadRoutes(mongoCollection *mongo.Collection, dg *discordgo.Session, cfg *c
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userService)
 	uploadHandler := handler.NewUploadHandler(uploadService, fileService, cfg)
+	fileHandler := handler.NewFileHandler(fileService)
 
 	// API routes
 	router.Route("/api/v1", func(api chi.Router) {
-
 		// Auth routes
 		api.Route("/auth", func(auth chi.Router) {
 			auth.Post("/sign-up", authHandler.Register)
@@ -62,10 +61,11 @@ func loadRoutes(mongoCollection *mongo.Collection, dg *discordgo.Session, cfg *c
 			users.Get("/", userHandler.GetAllUsers)
 		})
 
-		// Protected file upload route
+		// File routes
 		api.Route("/files", func(files chi.Router) {
-			files.Use(middlewares.Authenticate) // require authentication
-			files.Post("/upload", uploadHandler.HandleUpload)
+			files.Use(middlewares.Authenticate) // protect all file routes
+			files.Get("/", fileHandler.GetUserFiles)  // get all files for authenticated user
+			files.Post("/upload", uploadHandler.HandleUpload) // upload files
 		})
 	})
 
