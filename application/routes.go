@@ -28,7 +28,7 @@ func loadRoutes(mongoCollection *mongo.Collection, dg *discordgo.Session, cfg *c
 	// Collections
 	userCollection := mongoCollection.Database().Collection("users")
 	sessionCollection := mongoCollection.Database().Collection("sessions")
-	fileCollection := mongoCollection.Database().Collection("files") // files collection
+	fileCollection := mongoCollection.Database().Collection("files")
 
 	// Repositories
 	userRepo := repository.NewUserRepository(userCollection)
@@ -44,7 +44,7 @@ func loadRoutes(mongoCollection *mongo.Collection, dg *discordgo.Session, cfg *c
 	// Handlers
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userService)
-	uploadHandler := handler.NewUploadHandler(uploadService, fileService, cfg) // pass both services
+	uploadHandler := handler.NewUploadHandler(uploadService, fileService, cfg)
 
 	// API routes
 	router.Route("/api/v1", func(api chi.Router) {
@@ -62,8 +62,11 @@ func loadRoutes(mongoCollection *mongo.Collection, dg *discordgo.Session, cfg *c
 			users.Get("/", userHandler.GetAllUsers)
 		})
 
-		// Discord file upload route
-		api.Post("/upload", uploadHandler.HandleUpload)
+		// Protected file upload route
+		api.Route("/files", func(files chi.Router) {
+			files.Use(middlewares.Authenticate) // require authentication
+			files.Post("/upload", uploadHandler.HandleUpload)
+		})
 	})
 
 	return router

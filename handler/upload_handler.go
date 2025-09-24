@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/nileshshrs/infinite-storage/config"
+	"github.com/nileshshrs/infinite-storage/middlewares"
 	"github.com/nileshshrs/infinite-storage/service"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -27,7 +28,7 @@ func NewUploadHandler(uploadService *service.UploadService, fileService *service
 	}
 }
 
-// HandleUpload handles POST /api/v1/upload
+// HandleUpload handles POST /api/v1/files/upload
 func (h *UploadHandler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -82,18 +83,20 @@ func (h *UploadHandler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Optional: get user ID from request (example: JWT or form value)
+	// Get user ID from middleware context
 	var userID *primitive.ObjectID
-	// Example: userID could be nil if not provided
-	// parsedID, err := primitive.ObjectIDFromHex("...") 
-	// userID = &parsedID
+	if userIDHex, ok := r.Context().Value(middlewares.UserIDKey).(string); ok && userIDHex != "" {
+		if oid, err := primitive.ObjectIDFromHex(userIDHex); err == nil {
+			userID = &oid
+		}
+	}
 
 	// Save metadata to MongoDB
 	fileDoc, err := h.fileService.SaveUploadedFile(
 		header.Filename,        // original filename
 		fileInfo.Size(),        // file size
 		h.cfg.DiscordChannelID, // channel ID
-		userID,                 // optional user ID
+		userID,                 // authenticated user
 		uploadedChunks,         // uploaded chunks
 	)
 	if err != nil {
