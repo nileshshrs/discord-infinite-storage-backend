@@ -61,6 +61,8 @@ discord-infinite-storage/
 ## API Endpoints
 
 ### Auth
+The API provides endpoints for user registration, login, and token refresh using JWT.
+
 - `POST /api/v1/auth/sign-up` – Register a new user
 - `POST /api/v1/auth/sign-in` – Login and receive JWT
 - `POST /api/v1/auth/refresh` – Refresh JWT token
@@ -69,6 +71,8 @@ discord-infinite-storage/
 - `GET /api/v1/users/` – Retrieve all users (protected route)
 
 ### Files
+Manage user-specific files with upload and retrieval functionality.
+
 - `POST /api/v1/files/upload` – Upload a new file (protected route)
 - `GET /api/v1/files/` – Retrieve all files uploaded by the authenticated user (protected route)
 
@@ -88,40 +92,6 @@ go install github.com/cosmtrek/air@latest
 ```bash
 air
 ```
-
-## Authentication
-
-The API provides endpoints for user registration, login, and token refresh using JWT.
-
-- **POST** `/api/v1/auth/sign-up`  
-  Register a new user.
-
-- **POST** `/api/v1/auth/sign-in`  
-  Login and receive an access token.
-
-- **POST** `/api/v1/auth/refresh`  
-  Refresh JWT token.
-
----
-
-## Users
-
-- **GET** `/api/v1/users/` *(Protected)*  
-  Retrieve all registered users.
-
----
-
-## Files
-
-Manage user-specific files with upload and retrieval functionality.
-
-- **POST** `/api/v1/files/upload` *(Protected)*  
-  Upload a file to Discord and save metadata.
-
-- **GET** `/api/v1/files/` *(Protected)*  
-  Retrieve all files uploaded by the authenticated user.
-
----
 
 ## Future Work
 
